@@ -1,6 +1,7 @@
 import asyncHandler from "express-async-handler";
 import generateToken from "../utils/generateToken.js";
 import User from "../models/userModel.js";
+import { generateRandomPassword } from "../helper/passwordGenerator.js";
 
 //@desc    Auth user/set token
 //route    POST /api/users/auth
@@ -15,11 +16,12 @@ const userAuth = asyncHandler(async (req, res) => {
         _id: user._id,
         name: user.name,
         email: user.email,
+        profilePhoto:user.profilePhoto
       });
     } else {
-      res.status(401)
+      res.status(401);
       //console.log(email,password);
-       throw new Error('Invalid Credentials');
+      throw new Error("Invalid Credentials");
     }
   } catch (err) {
     res.status(500).json(err.message);
@@ -31,32 +33,79 @@ const userAuth = asyncHandler(async (req, res) => {
 //@access  Public
 const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
-  const userExists = await User.findOne({ email });
+  console.log(name,email,password)
+  try {
+    const userExists = await User.findOne({ email });
 
-  if (userExists) {
-    res.status(400);
-    throw new Error("User already exists");
-  }
+    if (userExists) {
+      res.status(400);
+      throw new Error("User already exists");
+    }
 
-  const user = await User.create({
-    name,
-    email,
-    password,
-  });
-
-  if (user) {
-    generateToken(res, user._id);
-    res.status(201).json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
+    const user = await User.create({
+      name,
+      email,
+      password,
     });
-  } else {
-    res.status(400);
-    throw new Error("Invalid user data");
+
+    if (user) {
+      generateToken(res, user._id);
+      res.status(201).json({
+        // _id: user._id,
+        // name: user.name,
+        // email: user.email,
+        message:'success'
+      });
+    } else {
+      res.status(400);
+      throw new Error("Invalid user data");
+    }
+  } catch (err) {
+    res.status(400).json(err.message);
   }
   //console.log(req.body);
-  res.status(200).json({ message: "Register User" });
+  //res.status(200).json({ message: "Register User" });
+});
+
+//@desc    Login with Google
+//route    POST /api/users/auth-google
+//@access  Public
+const authGoogle = asyncHandler(async (req, res) => {
+  const { name, email, photo } = req.body;
+  try {
+    const user = await User.findOne({ email: email });
+    if (user) {
+      generateToken(res, user._id);
+      res.status(201).json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+      });
+    } else {
+      const generatePassword = generateRandomPassword();
+      const newUser = await User.create({
+        name,
+        email,
+        password: generatePassword,
+        profilePhoto: photo,
+      });
+      await newUser.save();
+
+      if (newUser) {
+        generateToken(res, newUser._id);
+        res.status(201).json({
+          _id: newUser._id,
+          name: newUser.name,
+          email: newUser.email,
+        });
+      } else {
+        res.status(400);
+        throw new Error("Invalid user data");
+      }
+    }
+  } catch (err) {
+    res.status(400).json(err.message);
+  }
 });
 
 //@desc    Logout user
@@ -80,7 +129,7 @@ const getUserProfile = asyncHandler(async (req, res) => {
     name: req.user.name,
     email: req.user.email,
   };
-  res.status(200).json(user);
+  res.status(200).json(user); 
 });
 
 //@desc    To Update Profile
@@ -107,10 +156,34 @@ const updateUserProfile = asyncHandler(async (req, res) => {
   }
 });
 
+//@desc    To Upload user profile image
+//route    POST /api/users/upload
+//@access  Private
+const uploadProfilePhoto = asyncHandler(async(req,res)=>{
+  
+  try{
+    const id = req.query.id;
+    const filename = req.file.filename;
+    const user = await User.updateOne({_id:id},{$set:{profilePhoto:filename}});
+    const userData = await User.findOne({_id:id});
+    // const formData = req.body.formData
+    // console.log(id);
+    // console.log(req.file.filename);
+    if(user){
+      res.status(200).json(userData);
+
+    }
+  }catch(err){
+    throw new Error(err);
+  }
+})
+
 export {
   userAuth,
   registerUser,
+  authGoogle,
   logoutUser,
   getUserProfile,
   updateUserProfile,
+  uploadProfilePhoto
 };

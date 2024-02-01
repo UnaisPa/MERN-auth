@@ -1,6 +1,5 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import Modal from '@mui/material/Modal';
 
@@ -18,7 +17,7 @@ const style = {
 export default function Model({handleClose,setOpen,open}) {
 
   return (
-    <div>
+    
       <Modal
         open={open}
         onClose={handleClose}
@@ -34,6 +33,5 @@ export default function Model({handleClose,setOpen,open}) {
           </Typography>
         </Box>
       </Modal>
-    </div>
   );
 } 

@@ -1,12 +1,15 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { signInFailure, signInStart, signInSuccess } from "../redux/userSlice";
+import { signInFailure, signInStart, signInSuccess,signOut } from "../redux/userSlice";
 import { useDispatch, useSelector } from "react-redux";
 import axios from "../axios.js";
 import LoadingButton from "@mui/lab/LoadingButton";
 import SaveIcon from "@mui/icons-material/Save";
 import { ClipLoader } from "react-spinners";
 import ReportProblemRoundedIcon from '@mui/icons-material/ReportProblemRounded';
+import GoogleBtn from "../components/GoogleBtn.jsx";
+import {toast} from "react-toastify"
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const initialState = {
@@ -15,6 +18,9 @@ const Login = () => {
   };
   const [formData, setFormData] = useState(initialState);
   const [validateErrors, setValidateErrors] = useState({});
+  const [err,setErr] = useState('')
+
+  const navigate = useNavigate()
 
   const { loading, error } = useSelector((state) => state.user);
   const dispatch = useDispatch();
@@ -30,15 +36,20 @@ const Login = () => {
       try {
         dispatch(signInStart());
         const response = await axios.post("/users/auth", {
-          formData,
+          email:formData.email,
+          password:formData.password
         });
-        dispatch(signInSuccess(response.data));
+        toast.success('Login Success!');
+        setTimeout(()=>{
+          dispatch(signInSuccess(response.data));
+          navigate('/');
+        },1500)
+
       } catch (error) {
         console.error("Login error:", error);
-        dispatch(signInFailure(error.response ? error.response.data : error.message));
-        setTimeout(()=>{
-          dispatch(signInFailure(''))
-        },1000 * 10)
+        //dispatch(signInFailure());
+         dispatch(signInFailure(error.response ? error.response.data : error.message));
+        setErr(error.response ? error.response.data : error.message);
       }
     }
   };
@@ -58,11 +69,11 @@ const Login = () => {
   return (
     <>
       <div className=" my-auto">
-        <div className="my-auto w-full mt-10 text-white mx-auto h-[420px] sm:w-[450px]">
-          <h1 className="text-center  text-2xl font-semibold py-6">
+        <div className="my-auto w-full mt-5 text-white mx-auto h-[420px] sm:w-[450px]">
+          <h1 className="text-center  text-2xl font-semibold py-4">
             Sign in to your account
           </h1>
-          {error&&<p className="text-center text-orange-700 my-2" >{error} <ReportProblemRoundedIcon fontSize="small" /> </p>}
+          {err&&<p className="text-center text-orange-700 my-2" >{err} <ReportProblemRoundedIcon fontSize="small" /> </p>}
           <form onSubmit={handleSubmit}>
             <div className="text-white mx-5 mt-6">
               <label
@@ -119,9 +130,11 @@ const Login = () => {
                 <button
                   
                   type="submit"
-                  className="my-6 w-full rounded-md bg-indigo-700 px-11 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                  className="mt-6 mb-4 w-full rounded-md bg-indigo-700 px-11 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                 >SIGN IN</button>
               )}
+              <hr className="opacity-30" />
+              <GoogleBtn/>
 
               <p className="text-center text-sm text-slate-400">
                 Don't have an account?{" "}
