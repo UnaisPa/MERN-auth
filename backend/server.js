@@ -7,6 +7,7 @@ import connectDB from "./config/db.js";
 const port = process.env.PORT || 5000
 import { notFound,errorHandler } from "./middleware/errorMiddleware.js";
 import userRouter from "./routes/userRoutes.js";
+import adminRouter from "./routes/adminRoutes.js"
 
 connectDB();
 
@@ -21,6 +22,7 @@ app.use(Express.urlencoded({extended:true}));
 app.use(cookieParser())
 
 app.use('/api/users',userRouter);
+app.use('/api/admin',adminRouter);
 
 app.get('/',(req,res)=>{
     res.send('server started');

@@ -1,5 +1,5 @@
 import asyncHandler from "express-async-handler";
-import generateToken from "../utils/generateToken.js";
+import {generateToken} from "../utils/generateToken.js";
 import User from "../models/userModel.js";
 import { generateRandomPassword } from "../helper/passwordGenerator.js";
 
@@ -11,7 +11,9 @@ const userAuth = asyncHandler(async (req, res) => {
   try {
     const user = await User.findOne({ email });
     if (user && (await user.matchPassword(password))) {
-      generateToken(res, user._id);
+      //console.log(user)
+      generateToken(res, user);
+
       res.status(201).json({
         _id: user._id,
         name: user.name,
@@ -48,8 +50,8 @@ const registerUser = asyncHandler(async (req, res) => {
       password,
     });
 
-    if (user) {
-      generateToken(res, user._id);
+    if (user) { 
+      //generateToken(res, user._id);
       res.status(201).json({
         // _id: user._id,
         // name: user.name,
@@ -112,11 +114,7 @@ const authGoogle = asyncHandler(async (req, res) => {
 //route    POST /api/users/logout
 //@access  Public
 const logoutUser = asyncHandler(async (req, res) => {
-  res.cookie("jwt", "", {
-    httpOnly: true,
-    expires: new Date(0),
-  });
-
+  res.clearCookie('jwt')
   res.status(200).json({ message: "Logged Out" });
 });
 
@@ -137,22 +135,24 @@ const getUserProfile = asyncHandler(async (req, res) => {
 //@access  Private
 const updateUserProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
-  if (user) {
-    user.name = req.body.name || user.name;
-    user.email = req.body.email || user.email;
-    if (req.body.password) {
-      user.password = req.body.password;
+  try{
+    if (user) {
+      //console.log(req.body);
+       user.name = req.body.name || user.name;
+       user.email = req.body.email || user.email;
+      if (req.body.password) {
+        user.password = req.body.password;
+      }
+  
+       const updateUser = await user.save();
+       //console.log(user);
+      res.status(200).json(user)
+    } else {
+      res.status(404);
+      throw new Error("User not found");
     }
-
-    const updateUser = await user.save();
-    res.status(200).json({
-      _id: updateUser._id,
-      name: updateUser.name,
-      email: updateUser.email,
-    });
-  } else {
-    res.status(404);
-    throw new Error("User not found");
+  }catch(err){
+    res.json(err.message);
   }
 });
 
@@ -172,9 +172,11 @@ const uploadProfilePhoto = asyncHandler(async(req,res)=>{
     if(user){
       res.status(200).json(userData);
 
+    }else{
+      throw new Error('Error occured during updation of Profile photo')
     }
   }catch(err){
-    throw new Error(err);
+    res.status(500).json(err.message);
   }
 })
 

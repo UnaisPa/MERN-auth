@@ -19,7 +19,7 @@ const GoogleBtn = () => {
                 name:result.user.displayName,
                 email:result.user.email,
                 photo:result.user.photoURL
-            })
+            },{withCredentials:true})
             console.log(response.data);
             dispatch(signInSuccess(response.data))
         }catch(err){

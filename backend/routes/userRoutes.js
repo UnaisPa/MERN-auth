@@ -16,7 +16,7 @@ import multerStorage from "../helper/multerStorage.js";
 router.post("/", registerUser);
 router.post("/auth", userAuth);
 router.post("/auth-google",authGoogle);
-router.post("/logout", logoutUser);
+router.post("/logout", logoutUser); 
 
 const upload = multer({ storage: multerStorage });
 router.post('/upload',upload.single('image'),uploadProfilePhoto)
